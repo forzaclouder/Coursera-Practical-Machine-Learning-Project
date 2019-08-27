@@ -1,0 +1,66 @@
+---
+title: "Coursera Practical Machine Learning Project"
+author: "Yunke Li"
+date: "8/27/2019"
+output: html_document
+---
+##Back Ground
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+##Data
+The training data for this project are available here:
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+The test data are available here:
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har. 
+
+We downloaded data from given URL and clean it (removed all identification information and columuns have NA value) to make two 53 columuns data frames including training dataset (19622 rows), and testing dataset (20 rows).
+
+Then, the training set was splited into 70% and 30% by classe to established training and validation set.
+
+library(rpart)
+library(rpart.plot)
+library(randomForest)
+library(corrplot)
+
+```{r}
+library(caret)
+
+
+traindata<-read.csv("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", na.strings=c("","NA", "#DIV/0!"))
+testdata<-read.csv("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv", na.strings=c("","NA", "#DIV/0!"))
+
+traindata<-traindata[,colSums(is.na(traindata))==0] 
+testdata<-testdata[,colSums(is.na(testdata))==0] 
+
+traindata<-traindata[,-c(1:7)]
+testdata<-testdata[,-c(1:7)]
+
+set.seed(2019) 
+inTrain<-createDataPartition(traindata$classe,p=0.7,list=F)
+trainingset<-traindata[inTrain,]
+validationset<-traindata[-inTrain,]
+
+```
+
+##Model Training and Result
+We choose random forest algorithm to compute model. Model detail and the estimate of the performance of the model on the validation dataset, and testing set was given in the end of the paragraph.  
+```{r}
+control<-trainControl(method="cv", 5)
+model<-train(classe~.,data=trainingset,method="rf",trControl=control,ntree=250)
+vi <- varImp(model)$importance
+
+predict<-predict(modelRf,validationset)
+
+accuracy<-postResample(predict,validationset$classe)
+
+result<-predict(model,testdata[,-length(names(testdata))])
+
+model
+confusionMatrix(validationset$classe,predict)
+vi[head(order(unlist(vi), decreasing = TRUE), 5L), , drop = FALSE]
+accuracy
+result
+
+```
+
