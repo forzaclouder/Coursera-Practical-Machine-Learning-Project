@@ -19,7 +19,7 @@ control<-trainControl(method="cv", 5)
 model<-train(classe~.,data=trainingset,method="rf",trControl=control,ntree=250)
 vi <- varImp(model)$importance
 
-predict<-predict(modelRf,validationset)
+predict<-predict(model,validationset)
 
 accuracy<-postResample(predict,validationset$classe)
 
